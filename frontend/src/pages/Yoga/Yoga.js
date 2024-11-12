@@ -129,94 +129,103 @@ function Yoga() {
   }
 
   const detectPose = async (detector, poseClassifier, countAudio) => {
-  if (
-    typeof webcamRef.current !== "undefined" &&
-    webcamRef.current !== null &&
-    webcamRef.current.video.readyState === 4
-  ) {
-    let notDetected = 0;
-    const video = webcamRef.current.video;
-    const pose = await detector.estimatePoses(video);
-    const ctx = canvasRef.current.getContext('2d');
-
-    // Clear the canvas and set transformation for mirroring
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    ctx.save();  // Save initial state
-    ctx.scale(-1, 1);  // Flip horizontally
-    ctx.translate(-canvasRef.current.width, 0);  // Translate to compensate for flip
-
-    try {
-      const keypoints = pose[0].keypoints;
-
-      let input = keypoints.map((keypoint) => {
-        if (keypoint.score > 0.4) {
-          if (!(keypoint.name === 'left_eye' || keypoint.name === 'right_eye')) {
-            drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)');
-            let connections = keypointConnections[keypoint.name];
-            try {
-              connections.forEach((connection) => {
-                let conName = connection.toUpperCase();
-                drawSegment(ctx, [keypoint.x, keypoint.y],
-                  [keypoints[POINTS[conName]].x,
-                    keypoints[POINTS[conName]].y]
-                  , skeletonColor);
-              });
-            } catch (err) { }
+    if (
+      typeof webcamRef.current !== "undefined" &&
+      webcamRef.current !== null &&
+      webcamRef.current.video.readyState === 4
+    ) {
+      let notDetected = 0;
+      const video = webcamRef.current.video;
+      const pose = await detector.estimatePoses(video);
+      const ctx = canvasRef.current.getContext('2d');
+  
+      // Clear the canvas and set transformation for mirroring
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  
+      // Apply mirroring transformation for keypoints and skeleton rendering
+      ctx.save();
+      ctx.scale(-1, 1);  // Flip horizontally
+      ctx.translate(-canvasRef.current.width, 0);  // Translate to compensate for flip
+  
+      try {
+        const keypoints = pose[0].keypoints;
+  
+        let input = keypoints.map((keypoint) => {
+          if (keypoint.score > 0.4) {
+            if (!(keypoint.name === 'left_eye' || keypoint.name === 'right_eye')) {
+              drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)');
+              let connections = keypointConnections[keypoint.name];
+              try {
+                connections.forEach((connection) => {
+                  let conName = connection.toUpperCase();
+                  drawSegment(ctx, [keypoint.x, keypoint.y],
+                    [keypoints[POINTS[conName]].x,
+                      keypoints[POINTS[conName]].y]
+                    , skeletonColor);
+                });
+              } catch (err) { }
+            }
+          } else {
+            notDetected += 1;
           }
-        } else {
-          notDetected += 1;
-        }
-        return [keypoint.x, keypoint.y];
-      });
-
-      if (notDetected > 4) {
-        skeletonColor = 'rgb(255,255,255)';
-        ctx.restore();  // Restore original transformation
-        return;
-      }
-
-      const processedInput = landmarks_to_embedding(input);
-      const classification = poseClassifier.predict(processedInput);
-
-      classification.array().then((data) => {
-        const classNo = CLASS_NO[currentPose];
-        const confidence = data[0][classNo] * 100; // Confidence as a percentage
-        console.log(`Confidence: ${confidence}%`);
-
-        if (confidence > 97) {
-          if (!flag) {
-            countAudio.play();
-            setStartingTime(new Date(Date()).getTime());
-            flag = true;
-          }
-          setCurrentTime(new Date(Date()).getTime());
-          skeletonColor = 'rgb(0,255,0)';
-          
-        } else {
-          flag = false;
+          return [keypoint.x, keypoint.y];
+        });
+  
+        if (notDetected > 4) {
           skeletonColor = 'rgb(255,255,255)';
-          countAudio.pause();
-          countAudio.currentTime = 0;
+          ctx.restore();  // Restore original transformation
+          return;
         }
-
-        // Draw the confidence score in non-mirrored orientation
-        ctx.restore();  // Reset to normal orientation for text
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = 'rgb(255,255,255)';
-        ctx.fillText(`Confidence: ${Math.round(confidence)}%`, 50, 50);
-        
-        // Reapply mirror transformation for further drawings if needed
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.translate(-canvasRef.current.width, 0);
-      });
-    } catch (err) {
-      console.log(err);
+  
+        const processedInput = landmarks_to_embedding(input);
+        const classification = poseClassifier.predict(processedInput);
+  
+        classification.array().then((data) => {
+          const classNo = CLASS_NO[currentPose];
+          const confidence = data[0][classNo] * 100; // Confidence as a percentage
+          console.log(`Confidence: ${confidence}%`);
+  
+          if (confidence > 97) {
+            if (!flag) {
+              countAudio.play();
+              setStartingTime(new Date(Date()).getTime());
+              flag = true;
+            }
+            setCurrentTime(new Date(Date()).getTime());
+            skeletonColor = 'rgb(0,255,0)';
+            
+          } else {
+            flag = false;
+            skeletonColor = 'rgb(255,255,255)';
+            countAudio.pause();
+            countAudio.currentTime = 0;
+          }
+  
+          // **Draw the confidence text with the mirrored transformation**
+          ctx.font = 'bold 24px Arial';
+          ctx.fillStyle = 'rgb(255,255,255)';
+          ctx.fillText(`Confidence: ${Math.round(confidence)}%`, 50, 50);
+  
+          // Reapply mirror transformation for further drawings if needed
+          ctx.restore();
+          ctx.save();
+          ctx.scale(-1, 1);
+          ctx.translate(-canvasRef.current.width, 0);
+        });
+      } catch (err) {
+        console.log(err);
+      }
+  
+      ctx.restore();  
     }
+  };
+  
+  
+  
+  
+  
+  
 
-    ctx.restore();  
-  }
-};
 
   
   

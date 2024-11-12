@@ -24,3 +24,31 @@
     aspect-ratio: 1;
     border-radius: 15px;
 }
+
+.play-button, .stop-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.play-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.play-button:hover {
+    background-color: #45a049;
+}
+
+.stop-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+}
+
+.stop-button:hover {
+    background-color: #ff3333;
+}
