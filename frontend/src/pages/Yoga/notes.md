@@ -37,13 +37,12 @@ const CLASS_NO = {
   Warrior: 7,
 };
 
-
 function Yoga() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const detectorRef = useRef(null);
   const classifierRef = useRef(null);
-  const [showConfetti, setShowConfetti] = useState(false);
+
   const [startingTime, setStartingTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [poseTime, setPoseTime] = useState(0);
@@ -311,13 +310,15 @@ function Yoga() {
     const totalConfidence = confidenceValues.reduce((sum, score) => sum + score, 0);
     const averageConfidence = totalConfidence / confidenceValues.length;
 
+    console.log('Total Confidence:', totalConfidence);
+    console.log('Average Confidence:', averageConfidence);
+    console.log('Samples:', confidenceValues.length);
+
+    // Map average confidence to a score out of 10
     const finalScore = (averageConfidence / 100) * 10;
     setScore(finalScore.toFixed(2));
     setSamples(confidenceValues.length);
-
-    // Show confetti and score display
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 5000);
+    console.log('Final Score:', finalScore.toFixed(2));
   };
 
   const stopPose = () => {
@@ -334,7 +335,6 @@ function Yoga() {
   if (isStartPose) {
     return (
       <div className="yoga-container">
-        
         <div className="performance-container">
           <div className="pose-performance">
             <h4>Pose Time: {poseTime} s</h4>
@@ -383,7 +383,7 @@ function Yoga() {
           </div>
         )}
         {!isTraining && countdown === 0 && (
-          <div className="score-display">
+          <div className="score">
             <div>Your Score: {score}/10</div>
             <div>Based on {samples} samples</div>
           </div>
