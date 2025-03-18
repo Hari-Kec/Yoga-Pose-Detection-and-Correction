@@ -17,14 +17,14 @@ let poseList = [
   'Shoulderstand', 'Traingle'
 ];
 
-// Global variables (outside of React's state system)
+
 let interval;
 let trainingInterval;
 let samplingInterval;
-let confidenceValues = []; // Store confidence values
-let currentConfidenceValue = 0; // Current confidence value
-let isCurrentlyTraining = false; // Global training flag
-let flag = false; // For pose detection
+let confidenceValues = []; 
+let currentConfidenceValue = 0; 
+let isCurrentlyTraining = false; 
+let flag = false; 
 
 const CLASS_NO = {
   Chair: 0,
@@ -36,7 +36,6 @@ const CLASS_NO = {
   Tree: 6,
   Warrior: 7,
 };
-
 
 function Yoga() {
   const webcamRef = useRef(null);
@@ -55,6 +54,7 @@ function Yoga() {
   const [isTraining, setIsTraining] = useState(false);
   const [samples, setSamples] = useState(0);
   const [currentConfidence, setCurrentConfidence] = useState(0);
+  const [predictedIQ, setPredictedIQ] = useState(null); 
 
   useEffect(() => {
     const timeDiff = (currentTime - startingTime) / 1000;
@@ -72,7 +72,7 @@ function Yoga() {
     setBestPerform(0);
   }, [currentPose]);
 
-  // Cleanup effect for intervals
+  
   useEffect(() => {
     return () => {
       cleanupAllIntervals();
@@ -130,14 +130,14 @@ function Yoga() {
       const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
       const poseClassifier = await tf.loadLayersModel('https://models.s3.jp-tok.cloud-object-storage.appdomain.cloud/model.json');
       
-      // Store references for later use
+      
       detectorRef.current = detector;
       classifierRef.current = poseClassifier;
       
       const countAudio = new Audio(count);
       countAudio.loop = true;
       
-      // Clear any existing interval first
+      
       if (interval) clearInterval(interval);
       
       interval = setInterval(() => {
@@ -202,11 +202,11 @@ function Yoga() {
 
         classification.array().then((data) => {
           const classNo = CLASS_NO[currentPose];
-          const confidence = data[0][classNo] * 100; // Confidence as a percentage
+          const confidence = data[0][classNo] * 100; 
           
-          // Store current confidence globally
+          
           currentConfidenceValue = confidence;
-          // Update React state for display (less frequently)
+          
           setCurrentConfidence(Math.round(confidence));
 
           if (confidence > 97) {
@@ -230,7 +230,7 @@ function Yoga() {
           ctx.fillText(`Pose: ${currentPose}`, canvasWidth - 200, 50);
           ctx.fillText(`Confidence: ${Math.round(confidence)}%`, 50, 50);
 
-          // Show training status if active
+          
           if (isCurrentlyTraining) {
             ctx.fillText(`Training: ${countdown}s`, canvasWidth - 200, 90);
             ctx.fillText(`Samples: ${confidenceValues.length}`, 50, 90);
@@ -244,12 +244,12 @@ function Yoga() {
     }
   };
 
-  // Function to sample confidence values at regular intervals during training
+  
   const startSamplingConfidence = () => {
-    // Clear previous samples
+    
     confidenceValues = [];
     
-    // Sample every 100ms
+    
     samplingInterval = setInterval(() => {
       if (isCurrentlyTraining && currentConfidenceValue > 0) {
         confidenceValues.push(currentConfidenceValue);
@@ -259,36 +259,53 @@ function Yoga() {
     }, 100);
   };
 
+  
+  const predictIQ = (score) => {
+    if (score >= 9) {
+      return "140-160 (Genius)";
+    } else if (score >= 8) {
+      return "120-140 (Highly Intelligent)";
+    } else if (score >= 7) {
+      return "110-120 (Above Average)";
+    } else if (score >= 6) {
+      return "90-110 (Average)";
+    } else if (score >= 5) {
+      return "80-90 (Below Average)";
+    } else {
+      return "70-80 (Low)";
+    }
+  };
+
   const startTraining = () => {
     console.log('Training started');
     
-    // Set training flags
+    
     setIsTraining(true);
     isCurrentlyTraining = true;
     
-    // Reset values
+    
     setCountdown(20);
     setScore(0);
     setSamples(0);
     confidenceValues = [];
     
-    // Start sampling confidence values
+    
     startSamplingConfidence();
     
-    // Clear any existing training interval
+    
     if (trainingInterval) clearInterval(trainingInterval);
     
-    // Start countdown
+    
     trainingInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          // End training
+          
           clearInterval(trainingInterval);
           clearInterval(samplingInterval);
           setIsTraining(false);
           isCurrentlyTraining = false;
           
-          // Calculate score 
+          
           calculateScore();
           return 0;
         }
@@ -304,10 +321,11 @@ function Yoga() {
     if (confidenceValues.length === 0) {
       console.log('No confidence values recorded');
       setScore(0);
+      setPredictedIQ("N/A"); 
       return;
     }
 
-    // Calculate average confidence
+    
     const totalConfidence = confidenceValues.reduce((sum, score) => sum + score, 0);
     const averageConfidence = totalConfidence / confidenceValues.length;
 
@@ -315,7 +333,11 @@ function Yoga() {
     setScore(finalScore.toFixed(2));
     setSamples(confidenceValues.length);
 
-    // Show confetti and score display
+    
+    const iqRange = predictIQ(finalScore);
+    setPredictedIQ(iqRange);
+
+    
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 5000);
   };
@@ -334,7 +356,6 @@ function Yoga() {
   if (isStartPose) {
     return (
       <div className="yoga-container">
-        
         <div className="performance-container">
           <div className="pose-performance">
             <h4>Pose Time: {poseTime} s</h4>
@@ -385,6 +406,7 @@ function Yoga() {
         {!isTraining && countdown === 0 && (
           <div className="score-display">
             <div>Your Score: {score}/10</div>
+            <div>Predicted IQ: {predictedIQ}</div>
             <div>Based on {samples} samples</div>
           </div>
         )}

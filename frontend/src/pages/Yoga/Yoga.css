@@ -93,17 +93,18 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     margin-top:50px;
   }
-.score-display {
-    position: absolute;
-    top: 50%;
+  .score-display {
+    position: fixed;
+    bottom: 20px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     text-align: center;
     background: rgba(255, 255, 255, 0.9);
     padding: 40px;
     border-radius: 20px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  }
+}
+
   .score-display h1 {
     font-size: 60px;
     color: #FF8C00;

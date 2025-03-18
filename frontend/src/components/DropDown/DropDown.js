@@ -1,14 +1,10 @@
 import React from 'react'
-
 import { poseImages } from '../../utils/pose_images'
-
 import './DropDown.css'
-
 export default function DropDown({ poseList, currentPose, setCurrentPose }) {
 return (
         <div
         className='dropdown dropdown-container'
-         
       >
         <button 
             className="btn btn-secondary dropdown-toggle"
@@ -26,15 +22,11 @@ return (
                         <img 
                             src={poseImages[pose]}
                             className="dropdown-img"
-                        />
-                        
+                        /> 
                     </div>
                 </li>
             ))}
-            
-        </ul>
-              
-          
+        </ul>          
       </div>
     )
 }
